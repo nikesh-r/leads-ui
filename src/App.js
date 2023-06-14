@@ -1,24 +1,43 @@
-import logo from './logo.svg';
-import './App.css';
+import {
+  ApolloClient,
+  createHttpLink,
+  InMemoryCache,
+  ApolloProvider,
+  useQuery,
+} from "@apollo/client";
+import { setContext } from "@apollo/client/link/context";
+import { useEffect } from "react";
+import { GET_ALL_PROFILES } from "./graphql/queries";
+import Home from "./components/Home";
+
+const httpLink = createHttpLink({
+  uri: process.env.REACT_APP_API_URL,
+});
+
+const authLink = setContext((_, { headers }) => {
+  // get the authentication token from local storage if it exists
+  const token = process.env.REACT_APP_API_KEY;
+
+  console.log({ token });
+  // return the headers to the context so httpLink can read them
+  return {
+    headers: {
+      ...headers,
+      authorization: token ? `${token}` : "",
+    },
+  };
+});
+
+const client = new ApolloClient({
+  link: authLink.concat(httpLink),
+  cache: new InMemoryCache(),
+});
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <ApolloProvider client={client}>
+      <Home />
+    </ApolloProvider>
   );
 }
 
